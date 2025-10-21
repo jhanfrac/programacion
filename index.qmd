@@ -1,0 +1,59 @@
+---
+title: "Modelos lineales"
+author: "Jhan Franco"
+format: html
+---
+# paso para amnalisis de  datos
+1. crear el diseño experimental  modelo estadistico
+2. colectar datos
+3. importar y verificar los factores
+4. analisis de varianza 
+5. comparacion de medias
+6. grafico
+
+# libreria 
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(lme4)
+library(emmeans)
+```
+
+# cargar base de datos 
+
+
+```{r}
+library(readxl)
+data <- read_excel("C:/Users/Jhan Castro/Downloads/LA MOLINA 2014 POTATO WUE (FB) (1).csv", 
+    sheet = "fb")
+View(data)
+```
+
+
+# modelo
+$$ wue_{tuber}= /mu + bloque +riego + geno +riego*geno + e$$
+# analisis de varianza 
+
+```{r}
+
+md <- lmer(formula = twue ~  0 +(1|bloque) + riego*geno
+           , data = data)
+anova(md)
+
+library(car)
+
+anova(md)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
