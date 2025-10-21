@@ -1,5 +1,2 @@
----
-title: "readme"
-format: html
----
-
+clase de programacion y analisis de datos 
+repositorio de codigo 
