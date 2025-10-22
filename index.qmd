@@ -1,6 +1,6 @@
 ---
 title: "Modelos lineales"
-author: "Jhan Franco"
+author: "Jhan Franco Castro Cajo"
 format: html
 ---
 # paso para amnalisis de  datos
@@ -14,8 +14,15 @@ format: html
 # libreria 
 ```{r}
 library(tidyverse)
+```
+
+```{r}
 library(googlesheets4)
 library(lme4)
+```
+
+
+```{r}
 library(emmeans)
 ```
 
@@ -23,10 +30,19 @@ library(emmeans)
 
 
 ```{r}
-library(readxl)
-data <- read_excel("C:/Users/Jhan Castro/Downloads/LA MOLINA 2014 POTATO WUE (FB) (1).csv", 
-    sheet = "fb")
-View(data)
+url <- "https://docs.google.com/spreadsheets/d/15r7ZwcZZHbEgltlF6gSFvCTFA-CFzVBWwg3mFlRyKPs/edit?gid=1263018298#gid=1263018298"
+
+gs <- url %>% 
+  as_sheets_id()
+
+fb <- gs %>% 
+  range_read("fb") %>% 
+  mutate(across(1:bloque, ~as.factor(.)))
+
+```
+
+```{r}
+str(fb)
 ```
 
 
@@ -35,25 +51,89 @@ $$ wue_{tuber}= /mu + bloque +riego + geno +riego*geno + e$$
 # analisis de varianza 
 
 ```{r}
-
-md <- lmer(formula = twue ~  0 +(1|bloque) + riego*geno
-           , data = data)
-anova(md)
-
-library(car)
+md <- lmer(formula = twue ~ 0 + (1|bloque) + riego*geno
+           , data = fb)
 
 anova(md)
-
-
 
 ```
 
 
+```{r}
+library(car)
+```
 
+```{r}
+anova(md)
+```
 
+# paquetes completo
 
+```{r}
+library(lme4)
+library(emmeans)
+library(multcomp)
+```
 
+```{r}
+library(multcompView)
+library(ggplot2)
+library(dplyr)
+# Modelo Mixto
+md<- lmer(twue ~ 0+ (1|bloque) + riego*geno, data=fb)
 
+# anova tipo II o III 
+library(car)
+Anova(md, type = 3)
 
+```
 
+```{r}
+library(emmeans)
+library(multcompView)
+# Medias ajustadas para la interacción riego:geno
+emm <- emmeans(md, ~ riego:geno)
+
+# Comparación de medias con ajuste de Tukey
+comp <- pairs(emm, adjust = "tukey")
+
+# Generación de letras de significancia
+letras <- multcomp::cld(emm, adjust = "tukey", Letters = letters)
+```
+```{r}
+letras
+```
+
+# limpieza del data frame con letras 
+```{r}
+library(dplyr)
+letras_df <- letras %>%
+  as.data.frame() %>%
+  mutate(riego = factor(riego, levels = unique(fb$riego)),
+         geno = factor(geno, levels = unique(fb$geno)))
+```
+
+```{r}
+library(ggplot2)
+ggplot(letras_df, aes(x = geno, y = emmean, fill = riego)) +
+  geom_col(position = position_dodge(width = 0.8)) +
+  geom_errorbar(aes(ymin = emmean - SE, ymax = emmean + SE),
+                width = 0.2, position = position_dodge(width = 0.8)) +
+  geom_text(aes(label = .group, y = emmean + SE + 0.05),
+            position = position_dodge(width = 0.8),
+            size = 3, vjust = 0, angle = 90) +
+  labs(x = "Genotipos", y = "TWUE (eficiencia del uso del agua total)",
+       fill = "Riego") +
+  theme_classic(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+library(inti)
+```
+
+```{r}
+letras_df %>% 
+  plot_smr(x = "geno", y = "emmean", group = "riego"
+           , error = "SE", sig = ".group")
+```
 
